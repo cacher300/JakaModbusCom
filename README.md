@@ -45,7 +45,7 @@ pip install pymodbus
 Create an instance of the `Jaka_Coms` class with the Modbus server's IP address and port:
 
 ```python
-from Jaka_Coms import Jaka_Coms
+from JakaModbusCommunication import Jaka_Coms
 
 # Initialize the connection
 jaka = Jaka_Coms(host="192.168.1.10", port=502, auto_connect=True)
