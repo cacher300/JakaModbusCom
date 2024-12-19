@@ -1,152 +1,141 @@
-# JAKA_Coms Library README
+JakaModbusCommunication Library
+This library provides an interface to communicate with Jaka collaborative robots over Modbus TCP, enabling reading and writing of registers, controlling I/O, and retrieving robot status data.
 
-## Overview
+Features
+Connect to Modbus TCP servers.
+Read and write digital inputs/outputs.
+Read and write analog values (integer and floating-point).
+Access robot-specific data such as joint position, voltage, and speed.
+Monitor the robot's power, motion status, and error codes.
+Installation
+Install the required dependency:
 
-`JAKA_Coms` is a Python library for communicating with JAKA collaborative robots (cobots) over Modbus TCP. This library provides functionality for reading and writing discrete inputs, outputs, and analog values, as well as retrieving various system and sensor data.
-
----
-
-## Features
-
-- **Digital Input/Output Handling**:
-  - Read and write the states of digital inputs and outputs.
-  - Support for specific JAKA input/output types such as `CAB`, `TOOL`, and `MINI`.
-
-- **Analog Input/Output Handling**:
-  - Read and write 16-bit integer, signed integer, and 32-bit floating-point values to analog outputs.
-
-- **System Data**:
-  - Retrieve data such as servo version, serial numbers, joint data (voltages, temperatures, positions, etc.), TCP position and speed, control status, and cabinet data.
-
-- **Modbus TCP Connection Management**:
-  - Easy connection and disconnection from a Modbus TCP server.
-  - Automatic connection option.
-
----
-
-## Installation
-
-To use `JAKA_Coms`, you need to have the following Python package installed:
-
-- `pymodbus`
-
-Install it via pip if not already available:
-
-```bash
+bash
+Copy code
 pip install pymodbus
-```
-
----
-
-## Getting Started
-
-### Initialization
-
-Create an instance of the `Jaka_Coms` class with the Modbus server's IP address and port:
-
-```python
+Getting Started
+Import and Initialize
+python
+Copy code
 from JakaModbusCommunication import Jaka_Coms
 
-# Initialize the connection
-jaka = Jaka_Coms(host="192.168.1.10", port=502, auto_connect=True)
-```
+# Initialize the Modbus communication with the robot
+jaka = Jaka_Coms(host="192.168.1.186", port=502)  # Replace with your robot's IP
+Examples
+Reading Digital Inputs
+python
+Copy code
+# Read the state of discrete input 1
+input_state = jaka.read_modbus_input_state(input_number=1)
+print(f"Input 1 State: {input_state}")
+Writing Digital Outputs
+python
+Copy code
+# Set digital output 5 to ON
+jaka.write_digital_modbus_output(output_number=5, state=True)
 
-### Example Usage
+# Set digital output 5 to OFF
+jaka.write_digital_modbus_output(output_number=5, state=False)
+Reading Analog Values
+python
+Copy code
+# Read unsigned 16-bit value from analog output 3
+analog_value = jaka.read_int16(ao_number=3)
+print(f"Analog Output 3 Value: {analog_value}")
 
-#### Reading Digital Input State
-```python
-input_number = 1
-state = jaka.read_modbus_input_state(input_number)
-print(f"Input {input_number} state: {state}")
-```
+# Read signed 16-bit value from analog output 7
+signed_value = jaka.read_sign16(ao_number=7)
+print(f"Signed Analog Output 7 Value: {signed_value}")
 
-#### Writing Digital Output State
-```python
-output_number = 1
-jaka.write_digital_modbus_output(output_number, state=True)
-print(f"Output {output_number} set to ON")
-```
+# Read a 32-bit floating-point value from a specific register
+float_value = jaka.read_float32(address=150)
+print(f"Float Value at Register 150: {float_value}")
+Writing Analog Values
+python
+Copy code
+# Write unsigned 16-bit integer to analog output 4
+jaka.write_analog_output_int(ao_number=4, value=1234)
 
-#### Reading Analog Output as Float
-```python
-ao_number = 1
-value = jaka.read_float32(ao_number)
-print(f"AO{ao_number} value: {value}")
-```
+# Write signed 16-bit integer to analog output 6
+jaka.write_analog_output_sign(ao_number=6, value=-123)
 
-#### Writing Analog Output as Float
-```python
-ao_number = 1
-jaka.write_analog_output_float32(ao_number, value=12.34)
-print(f"Set AO{ao_number} to 12.34")
-```
+# Write a 32-bit floating-point value to analog output 2
+jaka.write_analog_output_float32(ao_number=2, value=12.34)
+Reading Robot Status
+python
+Copy code
+# Get joint 1 voltage
+joint_voltage = jaka.get_joint_voltage(joint=1)
+print(f"Joint 1 Voltage: {joint_voltage} V")
 
-#### Reading Joint Data
-```python
-joint = 1
-position = jaka.get_joint_position(joint)
-print(f"Joint {joint} position: {position}")
-```
+# Get joint 3 position
+joint_position = jaka.get_joint_position(joint=3)
+print(f"Joint 3 Position: {joint_position} degrees")
 
-### Closing the Connection
-```python
-jaka.close()
-```
+# Get joint 2 temperature
+joint_temperature = jaka.get_joint_temperature(joint=2)
+print(f"Joint 2 Temperature: {joint_temperature} °C")
+Monitoring Control Status
+python
+Copy code
+# Check if the robot is powered on
+is_powered_on = jaka.get_power_on_status()
+print(f"Robot Powered On: {'Yes' if is_powered_on else 'No'}")
 
----
+# Check if the robot is in position
+in_position = jaka.get_inpos_status()
+print(f"Robot In Position: {'Yes' if in_position else 'No'}")
 
-## Class Methods
-
-### Connection Management
-- `connect()`: Establish a connection.
-- `close()`: Close the connection.
-- `__del__()`: Destructor to ensure the connection is closed.
-
-### Digital Input/Output
-- `read_modbus_input_state(input_number)`: Read the state of a digital input.
-- `write_digital_modbus_output(output_number, state)`: Write the state of a digital output.
-
-### Analog Input/Output
-- `read_int16(ao_number)`: Read a 16-bit unsigned integer analog output.
-- `read_sign16(ao_number)`: Read a 16-bit signed integer analog output.
-- `read_float32(ao_number)`: Read a 32-bit floating-point analog output.
-- `write_analog_output_int(ao_number, value)`: Write a 16-bit unsigned integer analog output.
-- `write_analog_output_float32(ao_number, value)`: Write a 32-bit floating-point analog output.
-
-### System Data
-- Retrieve servo versions, joint data, TCP position, and cabinet data using various methods like:
-  - `get_joint_position(joint)`
-  - `get_tcp_position(axis)`
-  - `get_cab_temperature()`
-
----
-
-## Error Handling
-
-Errors during Modbus operations are raised as exceptions (`ModbusException`). Ensure to handle these in your implementation to avoid runtime crashes.
-
-Example:
-```python
+# Get current movement mode
+movement_mode = jaka.get_movement_mode()
+print(f"Movement Mode: {movement_mode}")
+Exception Handling Example
+python
+Copy code
 try:
-    state = jaka.read_modbus_input_state(1)
-except ModbusException as e:
-    print(f"Error reading input: {e}")
-```
+    joint_speed = jaka.get_joint_speed(joint=1)
+    print(f"Joint 1 Speed: {joint_speed} rad/s")
+except Exception as e:
+    print(f"Error reading joint speed: {e}")
+Closing the Connection
+Always close the connection after completing operations:
 
----
+python
+Copy code
+jaka.close()
+Full Example
+python
+Copy code
+from JakaModbusCommunication import Jaka_Coms
 
-## License
+# Connect to Jaka robot
+jaka = Jaka_Coms(host="192.168.1.186", port=502)
 
-This library is licensed under [Your License Here]. Replace this with the actual license details.
+try:
+    # Read and print joint voltage
+    voltage = jaka.get_joint_voltage(joint=1)
+    print(f"Joint 1 Voltage: {voltage} V")
 
----
+    # Set digital output 3 to ON
+    jaka.write_digital_modbus_output(output_number=3, state=True)
 
-## Contribution
+    # Read position of joint 2
+    position = jaka.get_joint_position(joint=2)
+    print(f"Joint 2 Position: {position} degrees")
 
-Contributions to enhance this library are welcome. Submit a pull request or open an issue on the repository.
+    # Write float value to analog output 1
+    jaka.write_analog_output_float32(ao_number=1, value=15.67)
+    
+except Exception as e:
+    print(f"An error occurred: {e}")
 
----
+finally:
+    # Close the connection
+    jaka.close()
+This library makes it simple to integrate Jaka cobots into your automation systems. Ensure your Modbus TCP server is configured correctly for seamless operation.
 
-## Disclaimer
 
-This library assumes familiarity with JAKA cobots and the Modbus protocol. Refer to JAKA's official documentation for more details on register mappings and functionalities.
+
+
+
+
