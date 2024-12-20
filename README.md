@@ -20,7 +20,11 @@ Install the required dependency:
 ```bash
 pip install pymodbus
 ```
+Install the library:
 
+```
+pip install JakaModbusCommunication
+```
 ---
 
 ## Getting Started
