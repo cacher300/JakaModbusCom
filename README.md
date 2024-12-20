@@ -188,4 +188,4 @@ finally:
 
 ---
 
-This library makes it simple to integrate Jaka cobots into your automation systems. Ensure your Modbus TCP server is configured correctly for seamless operation.
+Merry Christmas, Let me know of any issues
