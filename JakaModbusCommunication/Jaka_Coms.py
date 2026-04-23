@@ -14,6 +14,8 @@ from pymodbus.exceptions import ModbusException
 
 
 class Jaka_Coms:
+    _VALID_AXES = {"X", "Y", "Z", "RX", "RY", "RZ"}
+
     def __init__(self, host: str, port: int = 502, auto_connect: bool = True):
         """
         Initialize the ModbusHelper.
@@ -29,6 +31,24 @@ class Jaka_Coms:
         if auto_connect:
             self.connect()
 
+    @staticmethod
+    def _validate_joint(joint: int) -> None:
+        if not (1 <= joint <= 6):
+            raise ValueError("joint must be between 1 and 6.")
+
+    @staticmethod
+    def _validate_ao_number(ao_number: int) -> None:
+        if not (1 <= ao_number <= 16):
+            raise ValueError("ao_number must be between 1 and 16.")
+
+    @classmethod
+    def _validate_axis(cls, axis: str) -> str:
+        normalized_axis = axis.upper()
+        if normalized_axis not in cls._VALID_AXES:
+            valid_axes = ", ".join(sorted(cls._VALID_AXES))
+            raise ValueError(f"axis must be one of: {valid_axes}.")
+        return normalized_axis
+
     def connect(self) -> bool:
         """
         Establishes a connection to the Modbus TCP server.
@@ -36,14 +56,8 @@ class Jaka_Coms:
         :return: True if connection is successful, False otherwise.
         """
         try:
-            if self.client.connect():
-                print(f"Connected to Modbus server at {self.host}:{self.port}")
-                return True
-            else:
-                print(f"Unable to connect to Modbus server at {self.host}:{self.port}")
-                return False
+            return self.client.connect()
         except ModbusException as e:
-            print(f"Modbus connection error: {e}")
             return False
 
     def close(self):
@@ -51,7 +65,6 @@ class Jaka_Coms:
         Closes the connection to the Modbus TCP server.
         """
         self.client.close()
-        print("Closed connection to Modbus server.")
 
     def read_modbus_input_state(self, input_number: int) -> bool:
         """
@@ -145,6 +158,8 @@ class Jaka_Coms:
         :return: Unsigned 16-bit integer value.
         :raises ModbusException: If the read operation fails.
         """
+        self._validate_ao_number(ao_number)
+
         address = 95 + ao_number
         response = self.client.read_input_registers(address=address, count=1)
 
@@ -161,6 +176,8 @@ class Jaka_Coms:
         :return: Signed 16-bit integer value.
         :raises ModbusException: If the read operation fails.
         """
+        self._validate_ao_number(ao_number)
+
         address = 111 + ao_number - 16
         response = self.client.read_input_registers(address=address, count=1)
 
@@ -249,8 +266,10 @@ class Jaka_Coms:
         :raises ValueError: If ao_number is not within the valid range.
         :raises ModbusException: If the write operation fails.
         """
-        ao_number = 2 * (ao_number - 1) + 1
-        address = 131 + ao_number
+        self._validate_ao_number(ao_number)
+
+        register_offset = 2 * (ao_number - 1) + 1
+        address = 131 + register_offset
 
         # Pack the float value into two 16-bit registers (big-endian)
         raw = struct.pack(">f", value)
@@ -341,6 +360,7 @@ class Jaka_Coms:
         :raises ValueError: If the joint number is invalid.
         :raises ModbusException: If the read operation fails.
         """
+        self._validate_joint(joint)
         return self.read_float32(304 + (joint - 1) * 2)
 
     # Joint Temperatures
@@ -353,6 +373,7 @@ class Jaka_Coms:
         :raises ValueError: If the joint number is invalid.
         :raises ModbusException: If the read operation fails.
         """
+        self._validate_joint(joint)
         return self.read_float32(316 + (joint - 1) * 2)
 
     # Joint Servo Error Code
@@ -365,6 +386,7 @@ class Jaka_Coms:
         :raises ValueError: If the joint number is invalid.
         :raises ModbusException: If the read operation fails.
         """
+        self._validate_joint(joint)
         return self.read_int32(328 + (joint - 1) * 2)
 
     # Joint Error Status
@@ -377,6 +399,7 @@ class Jaka_Coms:
         :raises ValueError: If the joint number is invalid.
         :raises ModbusException: If the read operation fails.
         """
+        self._validate_joint(joint)
         return self.read_uint16(340 + (joint - 1))
 
     # Joint Enabled Status
@@ -389,6 +412,7 @@ class Jaka_Coms:
         :raises ValueError: If the joint number is invalid.
         :raises ModbusException: If the read operation fails.
         """
+        self._validate_joint(joint)
         return self.read_uint16(346 + (joint - 1))
 
     # Joint Collision Status
@@ -401,6 +425,7 @@ class Jaka_Coms:
         :raises ValueError: If the joint number is invalid.
         :raises ModbusException: If the read operation fails.
         """
+        self._validate_joint(joint)
         return self.read_uint16(352 + (joint - 1))
 
     # Joint Currents
@@ -413,6 +438,7 @@ class Jaka_Coms:
         :raises ValueError: If the joint number is invalid.
         :raises ModbusException: If the read operation fails.
         """
+        self._validate_joint(joint)
         return abs(self.read_float32(358 + (joint - 1) * 2))
 
     # Joint Position
@@ -425,6 +451,7 @@ class Jaka_Coms:
         :raises ValueError: If the joint number is invalid.
         :raises ModbusException: If the read operation fails.
         """
+        self._validate_joint(joint)
         return self.read_float32(382 + (joint - 1) * 2)
 
     # Joint Speed
@@ -437,6 +464,7 @@ class Jaka_Coms:
         :raises ValueError: If the joint number is invalid.
         :raises ModbusException: If the read operation fails.
         """
+        self._validate_joint(joint)
         return self.read_float32(394 + (joint - 1) * 2)
 
     # TCP Position
@@ -446,9 +474,10 @@ class Jaka_Coms:
 
         :param axis: Axis name (X, Y, Z, RX, RY, RZ).
         :return: TCP position along the specified axis in float.
-        :raises KeyError: If the axis is invalid.
+        :raises ValueError: If the axis is invalid.
         :raises ModbusException: If the read operation fails.
         """
+        axis = self._validate_axis(axis)
         axis_mapping = {"X": 406, "Y": 408, "Z": 410, "RX": 412, "RY": 414, "RZ": 416}
         return self.read_float32(axis_mapping[axis])
 
@@ -459,9 +488,10 @@ class Jaka_Coms:
 
         :param axis: Axis name (X, Y, Z, RX, RY, RZ).
         :return: TCP speed along the specified axis in float.
-        :raises KeyError: If the axis is invalid.
+        :raises ValueError: If the axis is invalid.
         :raises ModbusException: If the read operation fails.
         """
+        axis = self._validate_axis(axis)
         axis_mapping = {"X": 418, "Y": 420, "Z": 422, "RX": 424, "RY": 426, "RZ": 428}
         return self.read_float32(axis_mapping[axis])
 
@@ -635,5 +665,5 @@ class Jaka_Coms:
         """
         Destructor to ensure connection is closed if the object is garbage-collected.
         """
-        if self.client.is_socket_open():
+        if hasattr(self, "client") and self.client.is_socket_open():
             self.close()
