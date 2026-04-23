@@ -4,6 +4,8 @@
 
 [PyPI package](https://pypi.org/project/JakaModbusCommunication/)
 
+[Project page](https://lucaspijl.com/jaka-modbus-communication)
+
 ## Highlights
 
 - Connect to a JAKA controller over Modbus TCP
