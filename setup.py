@@ -7,7 +7,7 @@ README = Path(__file__).with_name("README.md").read_text(encoding="utf-8")
 
 setup(
     name="JakaModbusCommunication",
-    version="4.0.9",
+    version="4.1",
     author="Lucas Pijl",
     author_email="lapijl@uwaterloo.ca",
     description="A Modbus helper library for Jaka communication.",
